@@ -19,11 +19,11 @@ public class StatsServiceImpl implements StatsService {
 
     private final StatsRepository statsRepository;
     private final StatsMapper statsMapper;
-    private final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public void createHit(EndpointHit endpointHit) {
-        LocalDateTime timeStamp = LocalDateTime.parse(endpointHit.getTimestamp(), DATE_FORMATTER);
+        LocalDateTime timeStamp = LocalDateTime.parse(endpointHit.getTimestamp(), dateTimeFormatter);
         statsRepository.save(statsMapper.toStats(endpointHit, timeStamp));
         log.info("StatsService: {}", endpointHit);
     }
