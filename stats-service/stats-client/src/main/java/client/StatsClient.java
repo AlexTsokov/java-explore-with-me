@@ -18,7 +18,7 @@ import java.util.Map;
 @Slf4j
 public class StatsClient extends BaseClient {
 
-    private final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Autowired
     public StatsClient(@Value("${stats-server.url}") String serverUrl, RestTemplateBuilder builder) {
@@ -31,7 +31,7 @@ public class StatsClient extends BaseClient {
                 .app(appName)
                 .uri(uri)
                 .ip(ip)
-                .timestamp(timestamp.format(DATE_FORMATTER))
+                .timestamp(timestamp.format(dateFormatter))
                 .build();
         return post("/hit", endpointHit);
     }
@@ -43,8 +43,8 @@ public class StatsClient extends BaseClient {
         }
         StringBuilder uriBuilder = new StringBuilder("/stats" + "?start={start}&end={end}");
         Map<String, Object> parameters = Map.of(
-                "start", start.format(DATE_FORMATTER),
-                "end", end.format(DATE_FORMATTER));
+                "start", start.format(dateFormatter),
+                "end", end.format(dateFormatter));
 
         if (uris != null && !uris.isEmpty()) {
             for (String uri : uris) {
