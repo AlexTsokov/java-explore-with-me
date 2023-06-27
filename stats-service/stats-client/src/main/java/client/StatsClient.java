@@ -31,7 +31,7 @@ public class StatsClient extends BaseClient {
                 .app(appName)
                 .uri(uri)
                 .ip(ip)
-                .timestamp(timestamp.format(dateTimeFormatter))
+                .timestamp(timestamp)
                 .build();
         return post("/hit", endpointHit);
     }

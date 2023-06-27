@@ -9,7 +9,6 @@ import run.mapper.StatsMapper;
 import run.repository.StatsRepository;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -19,12 +18,10 @@ public class StatsServiceImpl implements StatsService {
 
     private final StatsRepository statsRepository;
     private final StatsMapper statsMapper;
-    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public void createHit(EndpointHit endpointHit) {
-        LocalDateTime timeStamp = LocalDateTime.parse(endpointHit.getTimestamp(), dateTimeFormatter);
-        statsRepository.save(statsMapper.toStats(endpointHit, timeStamp));
+        statsRepository.save(statsMapper.toStats(endpointHit, endpointHit.getTimestamp()));
         log.info("StatsService: {}", endpointHit);
     }
 
