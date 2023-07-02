@@ -8,6 +8,8 @@ import mainservice.category.model.Category;
 @Mapper(componentModel = "spring")
 public interface CategoryMapper {
     Category newCategoryDtoToCategory(NewCategoryDto newCategoryDto);
+
     Category categoryDtoToCategory(CategoryDto categoryDto);
+
     CategoryDto toCategoryDto(Category category);
 }
