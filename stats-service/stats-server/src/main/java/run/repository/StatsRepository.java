@@ -19,14 +19,6 @@ public interface StatsRepository extends JpaRepository<Stats, Long> {
     List<ViewStats> getStatsForUniqueIp(@Param("start") LocalDateTime start,
                                         @Param("end") LocalDateTime end);
 
-    @Query("SELECT new model.ViewStats(s.app, s.uri, COUNT(s.ip)) " +
-            "FROM Stats s " +
-            "WHERE s.timestamp BETWEEN :start AND :end " +
-            "GROUP BY s.app, s.uri " +
-            "ORDER BY COUNT(s.ip) DESC")
-    List<ViewStats> getAllStats(@Param("start") LocalDateTime start,
-                                @Param("end") LocalDateTime end);
-
     @Query("SELECT new model.ViewStats(s.app, s.uri, COUNT(DISTINCT s.ip)) " +
             "FROM Stats s " +
             "WHERE s.timestamp BETWEEN :start AND :end " +
@@ -37,13 +29,4 @@ public interface StatsRepository extends JpaRepository<Stats, Long> {
                                                 @Param("end") LocalDateTime end,
                                                 @Param("uris") List<String> uris);
 
-    @Query("SELECT new model.ViewStats(s.app, s.uri, COUNT(s.ip)) " +
-            "FROM Stats s " +
-            "WHERE s.timestamp BETWEEN :start AND :end " +
-            "AND s.uri IN :uris " +
-            "GROUP BY s.app, s.uri " +
-            "ORDER BY COUNT(s.ip) DESC")
-    List<ViewStats> getStatsWithUris(@Param("start") LocalDateTime start,
-                                     @Param("end") LocalDateTime end,
-                                     @Param("uris") List<String> uris);
 }

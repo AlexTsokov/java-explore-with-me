@@ -29,13 +29,9 @@ public class StatsServiceImpl implements StatsService {
     public List<ViewStats> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
         log.info("StatsService: start={}, end={}, uris={}, unique={}", start, end, uris, unique);
         if (uris == null || uris.isEmpty()) {
-            return unique ?
-                    statsRepository.getStatsForUniqueIp(start, end) :
-                    statsRepository.getAllStats(start, end);
+            return statsRepository.getStatsForUniqueIp(start, end);
         } else {
-            return unique ?
-                    statsRepository.getStatsWithUrisForUniqueIp(start, end, uris) :
-                    statsRepository.getStatsWithUris(start, end, uris);
+            return statsRepository.getStatsWithUrisForUniqueIp(start, end, uris);
         }
     }
 }
