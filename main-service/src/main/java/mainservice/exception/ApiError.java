@@ -8,10 +8,10 @@ import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
-public class Error {
+public class ApiError {
     private final String errors;
     private final String message;
-    private final String cause;
+    private final String reason;
     private final String status;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private final LocalDateTime timestamp;

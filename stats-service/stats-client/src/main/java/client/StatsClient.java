@@ -5,6 +5,7 @@ import model.EndpointHit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.DefaultUriBuilderFactory;
@@ -22,7 +23,10 @@ public class StatsClient extends BaseClient {
 
     @Autowired
     public StatsClient(@Value("${stats-server.url}") String serverUrl, RestTemplateBuilder builder) {
-        super(builder.uriTemplateHandler(new DefaultUriBuilderFactory(serverUrl)).build());
+        super(builder
+                .uriTemplateHandler(new DefaultUriBuilderFactory(serverUrl))
+                .requestFactory(HttpComponentsClientHttpRequestFactory::new)
+                .build());
     }
 
     public ResponseEntity<Object> addHit(String appName, String uri, String ip, LocalDateTime timestamp) {
@@ -37,7 +41,7 @@ public class StatsClient extends BaseClient {
     }
 
     public ResponseEntity<Object> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
-        log.info("StatsClient - getStats: start={}, end={}, uris={}, unique={}", start, end, uris, unique);
+        log.info("StatsClient: start={}, end={}, uris={}, unique={}", start, end, uris, unique);
         if (start == null || end == null || start.isAfter(end)) {
             throw new IllegalArgumentException("Неверный формат даты");
         }
@@ -45,13 +49,11 @@ public class StatsClient extends BaseClient {
         Map<String, Object> parameters = Map.of(
                 "start", start.format(dateTimeFormatter),
                 "end", end.format(dateTimeFormatter));
-
         if (uris != null && !uris.isEmpty()) {
             for (String uri : uris) {
                 uriBuilder.append("&uris=").append(uri);
             }
         }
-
         if (unique != null) {
             uriBuilder.append("&unique=").append(unique);
         }

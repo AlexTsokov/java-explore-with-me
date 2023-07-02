@@ -21,9 +21,9 @@ public class ErrorHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Error handleValidationException(final MethodArgumentNotValidException exception) {
+    public ApiError handleValidationException(final MethodArgumentNotValidException exception) {
         log.error(exception.toString());
-        return new Error(getErrors(exception),
+        return new ApiError(getErrors(exception),
                 String.format("В поле: %s. Ошибка: %s", Objects.requireNonNull(exception.getFieldError()).getField(),
                         exception.getFieldError().getDefaultMessage()),
                 "Неверный запрос",
@@ -36,9 +36,9 @@ public class ErrorHandler {
             ConstraintViolationException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Error handleValidationException(final RuntimeException exception) {
+    public ApiError handleValidationException(final RuntimeException exception) {
         log.error(exception.toString());
-        return new Error(getErrors(exception),
+        return new ApiError(getErrors(exception),
                 exception.getMessage(),
                 "Неверный запрос",
                 HttpStatus.BAD_REQUEST.name(),
@@ -47,9 +47,9 @@ public class ErrorHandler {
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Error handleNotFoundException(final NotFoundException exception) {
+    public ApiError handleNotFoundException(final NotFoundException exception) {
         log.error(exception.toString());
-        return new Error(getErrors(exception),
+        return new ApiError(getErrors(exception),
                 exception.getMessage(),
                 "Объект не найден",
                 HttpStatus.NOT_FOUND.name(),
@@ -58,9 +58,9 @@ public class ErrorHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public Error handleDataIntegrityViolationException(final DataIntegrityViolationException exception) {
+    public ApiError handleDataIntegrityViolationException(final DataIntegrityViolationException exception) {
         log.error(exception.toString());
-        return new Error(getErrors(exception),
+        return new ApiError(getErrors(exception),
                 exception.getMessage(),
                 "Ошибка данных",
                 HttpStatus.CONFLICT.name(),
@@ -68,21 +68,21 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler(DataException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public Error handleWrongDataException(final DataException exception) {
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleWrongDataException(final DataException exception) {
         log.error(exception.toString());
-        return new Error(getErrors(exception),
+        return new ApiError(getErrors(exception),
                 exception.getMessage(),
                 "Ошибка данных",
-                HttpStatus.CONFLICT.name(),
+                HttpStatus.BAD_REQUEST.name(),
                 LocalDateTime.now());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public Error handleException(final RuntimeException exception) {
+    public ApiError handleException(final RuntimeException exception) {
         log.error("Error 400: {}", exception.getMessage(), exception);
-        return new Error(getErrors(exception),
+        return new ApiError(getErrors(exception),
                 exception.getMessage(),
                 "Ошибка данных",
                 HttpStatus.INTERNAL_SERVER_ERROR.name(),

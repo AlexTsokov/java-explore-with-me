@@ -16,6 +16,7 @@ import mainservice.exception.DataException;
 import mainservice.exception.NotFoundException;
 import mainservice.user.model.User;
 import mainservice.user.service.UserService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -49,14 +50,14 @@ public class RequestServiceImpl implements RequestService {
         User user = userService.getUserById(userId);
         Event event = eventService.getEventById(eventId);
         if (Objects.equals(event.getInitiator().getId(), userId)) {
-            throw new DataException("Регистрация на свое событие невозможна.");
+            throw new DataIntegrityViolationException("Регистрация на свое событие невозможна.");
         }
         if (!event.getState().equals(EventState.PUBLISHED)) {
-            throw new DataException("Регистрация на неопубликованное событие невозможна.");
+            throw new DataIntegrityViolationException("Регистрация на неопубликованное событие невозможна.");
         }
         Optional<Request> oldRequest = requestRepository.findByEventIdAndRequesterId(eventId, userId);
         if (oldRequest.isPresent()) {
-            throw new DataException("Вы уже зарегистрированны.");
+            throw new DataIntegrityViolationException("Вы уже зарегистрированны.");
         }
         checkIsNewLimitGreaterOld(
                 statsService.getConfirmedRequests(List.of(event)).getOrDefault(eventId, 0L) + 1,
@@ -114,12 +115,12 @@ public class RequestServiceImpl implements RequestService {
         List<Request> requests = requestRepository.findAllByIdIn(eventRequestStatusUpdateRequest.getRequestIds());
 
         if (requests.size() != eventRequestStatusUpdateRequest.getRequestIds().size()) {
-            throw new NotFoundException("Some requests doesn't find");
+            throw new NotFoundException("Не найдено");
         }
         if (!requests.stream()
                 .map(Request::getStatus)
                 .allMatch(RequestStatus.PENDING::equals)) {
-            throw new DataException("Нелья изменить заброс, если стстус не PENDING");
+            throw new DataIntegrityViolationException("Нелья изменить заброс, если стстус не PENDING");
         }
         if (eventRequestStatusUpdateRequest.getStatus().equals(RequestStatusAction.REJECTED)) {
             rejectedList.addAll(changeStatusAndSave(requests, RequestStatus.REJECTED));
@@ -155,7 +156,7 @@ public class RequestServiceImpl implements RequestService {
 
     private void checkIsNewLimitGreaterOld(Long newLimit, Integer eventParticipantLimit) {
         if (eventParticipantLimit != 0 && (newLimit > eventParticipantLimit)) {
-            throw new DataException("Достигнут лимит: " + eventParticipantLimit);
+            throw new DataIntegrityViolationException("Достигнут лимит: " + eventParticipantLimit);
         }
     }
 

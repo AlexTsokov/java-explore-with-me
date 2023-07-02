@@ -17,6 +17,7 @@ import mainservice.exception.DataException;
 import mainservice.exception.NotFoundException;
 import mainservice.user.model.User;
 import mainservice.user.service.UserService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -58,10 +59,8 @@ public class EventServiceImpl implements EventService {
     public EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest updateEventAdminRequest) {
         log.info("MainService - updateEventByAdmin: eventId={}, updateEventAdminRequest={}",
                 eventId, updateEventAdminRequest);
-
         checkNewEventDate(updateEventAdminRequest.getEventDate(), LocalDateTime.now().plusHours(1));
         Event event = getEventById(eventId);
-
         if (updateEventAdminRequest.getAnnotation() != null) {
             event.setAnnotation(updateEventAdminRequest.getAnnotation());
         }
@@ -92,7 +91,7 @@ public class EventServiceImpl implements EventService {
         }
         if (updateEventAdminRequest.getStateAction() != null) {
             if (!event.getState().equals(EventState.PENDING)) {
-                throw new DataException("Статус должен быть PENDING");
+                throw new DataIntegrityViolationException("Статус должен быть PENDING");
             }
             switch (updateEventAdminRequest.getStateAction()) {
                 case PUBLISH_EVENT:
@@ -156,7 +155,7 @@ public class EventServiceImpl implements EventService {
         Event event = getEventByIdAndInitiatorId(eventId, userId);
 
         if (event.getState().equals(EventState.PUBLISHED)) {
-            throw new DataException("Невозможно изменить событие со статусом PUBLISHED");
+            throw new DataIntegrityViolationException("Невозможно изменить событие со статусом PUBLISHED");
         }
         if (updateEventUserRequest.getAnnotation() != null) {
             event.setAnnotation(updateEventUserRequest.getAnnotation());
@@ -233,7 +232,6 @@ public class EventServiceImpl implements EventService {
     public EventFullDto getEventByPublic(Long eventId, HttpServletRequest request) {
         log.info("MainService: eventId={}", eventId);
         Event event = getEventById(eventId);
-
         if (!event.getState().equals(EventState.PUBLISHED)) {
             throw new NotFoundException("Событие с ID " + eventId + " не найдено");
         }
