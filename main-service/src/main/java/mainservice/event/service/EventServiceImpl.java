@@ -3,7 +3,7 @@ package mainservice.event.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mainservice.category.model.Category;
-import mainservice.category.service.CategoryService;
+import mainservice.category.repository.CategoryRepository;
 import mainservice.event.dto.*;
 import mainservice.event.enums.EventSortType;
 import mainservice.event.enums.EventState;
@@ -16,7 +16,7 @@ import mainservice.event.repository.LocationRepository;
 import mainservice.exception.DataException;
 import mainservice.exception.NotFoundException;
 import mainservice.user.model.User;
-import mainservice.user.service.UserService;
+import mainservice.user.repository.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -34,8 +34,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class EventServiceImpl implements EventService {
 
-    private final UserService userService;
-    private final CategoryService categoryService;
+    private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
     private final StatsService statsService;
     private final LocationRepository locationRepository;
     private final EventRepository eventRepository;
@@ -68,7 +68,9 @@ public class EventServiceImpl implements EventService {
             event.setDescription(updateEventAdminRequest.getDescription());
         }
         if (updateEventAdminRequest.getCategory() != null) {
-            event.setCategory(categoryService.getCategoryById(updateEventAdminRequest.getCategory()));
+            Long catId = updateEventAdminRequest.getCategory();
+            event.setCategory(categoryRepository.findById(catId)
+                    .orElseThrow(() -> new NotFoundException("Категория с ID " + catId + " не найдена")));
         }
         if (updateEventAdminRequest.getEventDate() != null) {
             event.setEventDate(updateEventAdminRequest.getEventDate());
@@ -83,7 +85,6 @@ public class EventServiceImpl implements EventService {
             checkIsNewLimitNotLessOld(
                     updateEventAdminRequest.getParticipantLimit(),
                     statsService.getConfirmedRequests(List.of(event)).getOrDefault(eventId, 0L));
-
             event.setParticipantLimit(updateEventAdminRequest.getParticipantLimit());
         }
         if (updateEventAdminRequest.getRequestModeration() != null) {
@@ -106,54 +107,46 @@ public class EventServiceImpl implements EventService {
         if (updateEventAdminRequest.getTitle() != null) {
             event.setTitle(updateEventAdminRequest.getTitle());
         }
-
         return toEventFullDto(eventRepository.save(event));
     }
 
     @Override
     public List<EventShortDto> getAllEventsByPrivate(Long userId, Pageable pageable) {
         log.info("MainService: userId={}, pageable={}", userId, pageable);
-
-        userService.checkUserInBase(userId);
+        checkUserInBase(userId);
         List<Event> events = eventRepository.findAllByInitiatorId(userId, pageable);
-
         return toEventsShortDto(events);
     }
 
     @Override
     public EventFullDto createEventByPrivate(Long userId, NewEventDto newEventDto) {
         log.info("MainService - createEventByPrivate: userId={}, newEventDto={}", userId, newEventDto);
-
         checkNewEventDate(newEventDto.getEventDate(), LocalDateTime.now().plusHours(2));
-
-        User eventUser = userService.getUserById(userId);
-        Category eventCategory = categoryService.getCategoryById(newEventDto.getCategory());
+        User eventUser = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с ID " + userId + " не найден"));
+        Long catId = newEventDto.getCategory();
+        Category eventCategory = categoryRepository.findById(catId)
+                .orElseThrow(() -> new NotFoundException("Категория с ID " + catId + " не найдена"));
         Location eventLocation = getOrSaveLocation(newEventDto.getLocation());
-
         Event newEvent = eventMapper.toEvent(newEventDto, eventUser, eventCategory, eventLocation, LocalDateTime.now(),
                 EventState.PENDING);
-
         return toEventFullDto(eventRepository.save(newEvent));
     }
 
     @Override
     public EventFullDto getEventByPrivate(Long userId, Long eventId) {
         log.info("MainService - getEventByPrivate: userId={}, eventId={}", userId, eventId);
-
-        userService.checkUserInBase(userId);
+        checkUserInBase(userId);
         Event event = getEventByIdAndInitiatorId(eventId, userId);
-
         return toEventFullDto(eventRepository.save(event));
     }
 
     @Override
     public EventFullDto updateEventByPrivate(Long userId, Long eventId, UpdateEventUserRequest updateEventUserRequest) {
         log.info("MainService: userId={}, eventId={}, {}", userId, eventId, updateEventUserRequest);
-
         checkNewEventDate(updateEventUserRequest.getEventDate(), LocalDateTime.now().plusHours(2));
-        userService.checkUserInBase(userId);
+        checkUserInBase(userId);
         Event event = getEventByIdAndInitiatorId(eventId, userId);
-
         if (event.getState().equals(EventState.PUBLISHED)) {
             throw new DataIntegrityViolationException("Невозможно изменить событие со статусом PUBLISHED");
         }
@@ -161,7 +154,9 @@ public class EventServiceImpl implements EventService {
             event.setAnnotation(updateEventUserRequest.getAnnotation());
         }
         if (updateEventUserRequest.getCategory() != null) {
-            event.setCategory(categoryService.getCategoryById(updateEventUserRequest.getCategory()));
+            Long catId = updateEventUserRequest.getCategory();
+            event.setCategory(categoryRepository.findById(catId)
+                    .orElseThrow(() -> new NotFoundException("Категория с ID " + catId + " не найдена")));
         }
         if (updateEventUserRequest.getDescription() != null) {
             event.setDescription(updateEventUserRequest.getDescription());
@@ -313,6 +308,12 @@ public class EventServiceImpl implements EventService {
     private void checkIsNewLimitNotLessOld(Integer newLimit, Long eventParticipantLimit) {
         if (newLimit != 0 && eventParticipantLimit != 0 && (newLimit < eventParticipantLimit)) {
             throw new DataException("Лимит не может быть меньше количества участников: " + eventParticipantLimit);
+        }
+    }
+
+    public void checkUserInBase(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new NotFoundException("Пользователь с ID " + id + " не найден");
         }
     }
 
