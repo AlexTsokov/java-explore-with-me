@@ -1,9 +1,6 @@
 package run.model;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import lombok.*;
 
 import javax.persistence.Entity;
 import javax.persistence.Column;

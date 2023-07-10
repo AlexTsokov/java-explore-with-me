@@ -28,14 +28,17 @@ public class StatsServiceImpl implements StatsService {
     @Override
     public List<ViewStats> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
         log.info("StatsService: start={}, end={}, uris={}, unique={}", start, end, uris, unique);
+        if (start == null || end == null || start.isAfter(end)) {
+            throw new IllegalArgumentException("Неверный формат даты");
+        }
         if (uris == null || uris.isEmpty()) {
             return unique ?
                     statsRepository.getStatsForUniqueIp(start, end) :
                     statsRepository.getAllStats(start, end);
         } else {
             return unique ?
-                    statsRepository.getStatsWithUrisForUniqueIp(start, end, uris) :
-                    statsRepository.getStatsWithUris(start, end, uris);
+                    statsRepository.getStatsByUrisForUniqueIp(start, end, uris) :
+                    statsRepository.getStatsByUris(start, end, uris);
         }
     }
 }
