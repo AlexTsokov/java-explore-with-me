@@ -48,16 +48,14 @@ public class EventServiceImpl implements EventService {
                                                   LocalDateTime rangeEnd, Integer from, Integer size) {
         log.info("MainService: users={}, states={}, categoriesId={}, rangeStart={}, " +
                 "rangeEnd={}, from={}, size={}", users, states, categories, rangeStart, rangeEnd, from, size);
-
         checkStartIsBeforeEnd(rangeStart, rangeEnd);
         List<Event> events = eventRepository.getEventsByAdmin(users, states, categories, rangeStart, rangeEnd, from, size);
-
         return toEventsFullDto(events);
     }
 
     @Override
     public EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest updateEventAdminRequest) {
-        log.info("MainService - updateEventByAdmin: eventId={}, updateEventAdminRequest={}",
+        log.info("MainService: eventId={}, updateEventAdminRequest={}",
                 eventId, updateEventAdminRequest);
         checkNewEventDate(updateEventAdminRequest.getEventDate(), LocalDateTime.now().plusHours(1));
         Event event = getEventById(eventId);
@@ -120,7 +118,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto createEventByPrivate(Long userId, NewEventDto newEventDto) {
-        log.info("MainService - createEventByPrivate: userId={}, newEventDto={}", userId, newEventDto);
+        log.info("MainService: userId={}, newEventDto={}", userId, newEventDto);
         checkNewEventDate(newEventDto.getEventDate(), LocalDateTime.now().plusHours(2));
         User eventUser = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с ID " + userId + " не найден"));
@@ -135,7 +133,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto getEventByPrivate(Long userId, Long eventId) {
-        log.info("MainService - getEventByPrivate: userId={}, eventId={}", userId, eventId);
+        log.info("MainService: userId={}, eventId={}", userId, eventId);
         checkUserInBase(userId);
         Event event = getEventByIdAndInitiatorId(eventId, userId);
         return toEventFullDto(eventRepository.save(event));
@@ -314,6 +312,13 @@ public class EventServiceImpl implements EventService {
     public void checkUserInBase(Long id) {
         if (!userRepository.existsById(id)) {
             throw new NotFoundException("Пользователь с ID " + id + " не найден");
+        }
+    }
+
+    @Override
+    public void checkEventInBase(Long eventId) {
+        if (!eventRepository.existsById(eventId)) {
+            throw new NotFoundException("Событие с ID " + eventId + " не существует");
         }
     }
 
