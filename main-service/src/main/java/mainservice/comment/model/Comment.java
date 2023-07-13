@@ -3,6 +3,8 @@ package mainservice.comment.model;
 import lombok.*;
 import mainservice.event.model.Event;
 import mainservice.user.model.User;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -33,6 +35,8 @@ public class Comment {
     @Column(nullable = false, length = 1000)
     private String text;
     @Column(nullable = false)
+    @CreationTimestamp
     private LocalDateTime created;
+    @UpdateTimestamp
     private LocalDateTime edited;
 }

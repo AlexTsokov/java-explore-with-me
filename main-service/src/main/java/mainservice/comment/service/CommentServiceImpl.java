@@ -16,8 +16,8 @@ import mainservice.user.repository.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.Objects;
@@ -25,6 +25,7 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class CommentServiceImpl implements CommentService {
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
@@ -37,13 +38,15 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional
     public void deleteCommentByAdmin(Long commentId) {
-        log.info("MainService: commentId={}", commentId);
+        log.info("MainService, deleting comment by admin: commentId={}", commentId);
         checkCommentInBase(commentId);
         commentRepository.deleteById(commentId);
     }
 
     @Override
+    @Transactional
     public CommentDto createCommentByPrivate(Long userId, Long eventId, NewCommentDto newCommentDto) {
         log.info("MainService: userId={}, eventId={}, NewCommentDto={}",
                 eventId, userId, newCommentDto);
@@ -58,7 +61,6 @@ public class CommentServiceImpl implements CommentService {
                 .text(newCommentDto.getText())
                 .author(user)
                 .event(event)
-                .created(LocalDateTime.now())
                 .build();
         return mapper.toCommentDto(commentRepository.save(comment));
     }
@@ -79,20 +81,21 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional
     public CommentDto updateCommentByPrivate(Long userId, Long commentId, NewCommentDto newCommentDto) {
-        log.info("MainService: userId={}, commentId={}, newCommentDto={}",
+        log.info("MainService, updating comment by private: userId={}, commentId={}, newCommentDto={}",
                 commentId, userId, newCommentDto);
         checkUserInBase(userId);
         Comment commentFromRepository = getCommentById(commentId);
         checkIfUserIsCommentAuthor(userId, commentFromRepository.getAuthor().getId());
         commentFromRepository.setText(newCommentDto.getText());
-        commentFromRepository.setEdited(LocalDateTime.now());
         return mapper.toCommentDto(commentRepository.save(commentFromRepository));
     }
 
     @Override
+    @Transactional
     public void deleteCommentByPrivate(Long userId, Long commentId) {
-        log.info("MainService: userId={}, commentId={}", userId, commentId);
+        log.info("MainService, deleting comment by private: userId={}, commentId={}", userId, commentId);
         checkUserInBase(userId);
         checkIfUserIsCommentAuthor(userId, getCommentById(commentId).getAuthor().getId());
         commentRepository.deleteById(commentId);
@@ -135,13 +138,13 @@ public class CommentServiceImpl implements CommentService {
         }
     }
 
-    public void checkUserInBase(Long id) {
+    private void checkUserInBase(Long id) {
         if (!userRepository.existsById(id)) {
             throw new NotFoundException("Пользователь с ID " + id + " не найден");
         }
     }
 
-    public void checkEventInBase(Long eventId) {
+    private void checkEventInBase(Long eventId) {
         if (!eventRepository.existsById(eventId)) {
             throw new NotFoundException("Событие с ID " + eventId + " не существует");
         }
