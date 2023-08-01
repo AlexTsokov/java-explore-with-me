@@ -53,16 +53,13 @@ public class StatsServiceImpl implements StatsService {
         log.info("MainService: events={}", events);
         Map<Long, Long> views = new HashMap<>();
         List<Event> publishedEvents = getPublished(events);
-
         if (events.isEmpty()) {
             return views;
         }
-
         Optional<LocalDateTime> minPublishedOn = publishedEvents.stream()
                 .map(Event::getPublishedOn)
                 .filter(Objects::nonNull)
                 .min(LocalDateTime::compareTo);
-
         if (minPublishedOn.isPresent()) {
             LocalDateTime start = minPublishedOn.get();
             LocalDateTime end = LocalDateTime.now();
@@ -70,7 +67,6 @@ public class StatsServiceImpl implements StatsService {
                     .map(Event::getId)
                     .map(id -> ("/events/" + id))
                     .collect(Collectors.toList());
-
             List<ViewStats> stats = getStats(start, end, uris, true);
             stats.forEach(stat -> {
                 Long eventId = Long.parseLong(stat.getUri()
@@ -78,7 +74,6 @@ public class StatsServiceImpl implements StatsService {
                 views.put(eventId, views.getOrDefault(eventId, 0L) + stat.getHits());
             });
         }
-
         return views;
     }
 
@@ -87,14 +82,11 @@ public class StatsServiceImpl implements StatsService {
         List<Long> eventsId = getPublished(events).stream()
                 .map(Event::getId)
                 .collect(Collectors.toList());
-
         Map<Long, Long> requestStats = new HashMap<>();
-
         if (!eventsId.isEmpty()) {
             requestRepository.getConfirmedRequests(eventsId)
                     .forEach(stat -> requestStats.put(stat.getEventId(), stat.getConfirmedRequests()));
         }
-
         return requestStats;
     }
 
